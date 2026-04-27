@@ -4,68 +4,113 @@ import json
 from pathlib import Path
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
+
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 CONFIG_PATH = Path("config.local.json")
+GROQ_PROVIDER = "groq"
+_MANAGED_KEY_PLACEHOLDER = "REPLACE_WITH_YOUR_MANAGED_GROQ_API_KEY"
+MANAGED_GROQ_API_KEY = os.getenv("MANAGED_GROQ_API_KEY", _MANAGED_KEY_PLACEHOLDER)
 
 
 class LLMConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    provider: str = Field(description="Provider slug, e.g. openai, anthropic, custom")
+    provider: str = Field(description="Provider slug. Only 'groq' is supported.")
     model: str
     api_key: str
     base_url: Optional[str] = None
     timeout_seconds: int = 60
 
+    @field_validator("provider")
+    @classmethod
+    def _validate_provider(cls, value: str) -> str:
+        provider = value.strip().lower()
+        if provider != GROQ_PROVIDER:
+            raise ValueError("Only 'groq' provider is supported")
+        return provider
+
 
 SUPPORTED_PROVIDERS = {
-    "openai": "OpenAI Chat Completions",
-    "anthropic": "Anthropic Messages",
-    "google": "Google Gemini OpenAI-compatible endpoint",
-    "openrouter": "OpenRouter OpenAI-compatible endpoint",
-    "groq": "Groq OpenAI-compatible endpoint",
-    "together": "Together OpenAI-compatible endpoint",
-    "ollama": "Local Ollama OpenAI-compatible endpoint",
-    "custom": "Any OpenAI-compatible endpoint",
+    GROQ_PROVIDER: "Groq Cloud OpenAI-compatible endpoint",
 }
 
 
 DEFAULT_MODELS = {
-    "openai": "gpt-4o-mini",
-    "anthropic": "claude-3-5-sonnet-latest",
-    "google": "gemini-1.5-pro",
-    "openrouter": "openai/gpt-4o-mini",
-    "groq": "llama-3.1-70b-versatile",
-    "together": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-    "ollama": "llama3.1",
-    "custom": "gpt-4o-mini",
+    GROQ_PROVIDER: "llama-3.1-70b-versatile",
 }
 
 
 DEFAULT_BASE_URLS = {
-    "openai": "https://api.openai.com/v1",
-    "anthropic": "https://api.anthropic.com/v1",
-    "google": "https://generativelanguage.googleapis.com/v1beta/openai",
-    "openrouter": "https://openrouter.ai/api/v1",
-    "groq": "https://api.groq.com/openai/v1",
-    "together": "https://api.together.xyz/v1",
-    "ollama": "http://localhost:11434/v1",
-    "custom": "",
+    GROQ_PROVIDER: "https://api.groq.com/openai/v1",
 }
 
 
+def get_managed_api_key() -> str:
+    return MANAGED_GROQ_API_KEY.strip()
+
+
+def _default_config() -> LLMConfig:
+    return LLMConfig(
+        provider=GROQ_PROVIDER,
+        model=DEFAULT_MODELS[GROQ_PROVIDER],
+        api_key=get_managed_api_key(),
+        base_url=DEFAULT_BASE_URLS[GROQ_PROVIDER],
+    )
+
+
 def load_config() -> Optional[LLMConfig]:
+    default = _default_config()
     if not CONFIG_PATH.exists():
-        return None
-    raw = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
-    return LLMConfig.model_validate(raw)
+        return default
+    try:
+        raw = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return default
+
+    provider = str(raw.get("provider", GROQ_PROVIDER)).strip().lower() or GROQ_PROVIDER
+    if provider != GROQ_PROVIDER:
+        return default
+
+    model = str(raw.get("model", "")).strip() or default.model
+    base_url = raw.get("base_url")
+    if isinstance(base_url, str):
+        base_url = base_url.strip() or default.base_url
+    else:
+        base_url = default.base_url
+    timeout_seconds = raw.get("timeout_seconds", default.timeout_seconds)
+    try:
+        timeout_seconds = int(timeout_seconds)
+    except (TypeError, ValueError):
+        timeout_seconds = default.timeout_seconds
+
+    try:
+        return LLMConfig(
+            provider=provider,
+            model=model,
+            api_key=get_managed_api_key(),
+            base_url=base_url,
+            timeout_seconds=timeout_seconds,
+        )
+    except ValidationError:
+        return default
 
 
 def save_config(config: LLMConfig) -> None:
-    CONFIG_PATH.write_text(config.model_dump_json(indent=2), encoding="utf-8")
+    payload = {
+        "provider": config.provider,
+        "model": config.model,
+        "base_url": config.base_url,
+        "timeout_seconds": config.timeout_seconds,
+    }
+    CONFIG_PATH.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
 def is_configured() -> bool:
-    return CONFIG_PATH.exists()
+    key = get_managed_api_key()
+    return bool(key and key != _MANAGED_KEY_PLACEHOLDER)

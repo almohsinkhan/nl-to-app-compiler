@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 from typing import Dict, Optional, Tuple
 
-from pipeline.config import load_config
+from pipeline.config import is_configured, load_config
 from pipeline.executor import BlueprintExecutor
 from pipeline.intent_extractor import IntentExtractor
 from pipeline.llm_client import LLMClient
@@ -23,7 +23,7 @@ class PipelineCompiler:
     def __init__(self):
         llm_client = None
         config = load_config()
-        if config:
+        if config and is_configured():
             llm_client = LLMClient(config)
 
         self.intent_extractor = IntentExtractor(llm_client)

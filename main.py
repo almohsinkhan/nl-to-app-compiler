@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 from fastapi import FastAPI, Response
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
 
 from pipeline.compiler import PipelineCompiler
@@ -18,7 +22,19 @@ from pipeline.evaluator import PipelineEvaluator
 from pipeline.types import CompileResponse
 
 
+BASE_DIR = Path(__file__).resolve().parent
+WEB_DIR = BASE_DIR / "web"
+
+
 app = FastAPI(title="NL App Compiler", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class CompileRequest(BaseModel):
@@ -28,14 +44,14 @@ class CompileRequest(BaseModel):
 
 class ConfigInitRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    provider: str
-    api_key: str = ""
+    provider: str | None = None
+    api_key: str | None = None
     model: str | None = None
     base_url: str | None = None
 
 
-@app.get("/")
-def root() -> dict:
+@app.get("/api")
+def api_root() -> dict:
     return {
         "name": "NL App Compiler API",
         "status": "ok",
@@ -66,19 +82,26 @@ def config_status() -> dict:
 
 
 def _save_llm_config(request: ConfigInitRequest) -> dict:
-    provider = request.provider.strip().lower()
+    provider = (request.provider or "groq").strip().lower()
     if provider not in SUPPORTED_PROVIDERS:
         return {
             "ok": False,
-            "message": f"Unsupported provider '{provider}'",
+            "message": f"Unsupported provider '{provider}'. Only 'groq' is supported.",
             "supported_providers": list(SUPPORTED_PROVIDERS.keys()),
         }
 
     model = request.model or DEFAULT_MODELS[provider]
+    current = load_config()
+    if not current:
+        return {
+            "ok": False,
+            "message": "Unable to load managed Groq configuration.",
+            "supported_providers": list(SUPPORTED_PROVIDERS.keys()),
+        }
     config = LLMConfig(
         provider=provider,
         model=model,
-        api_key=request.api_key,
+        api_key=current.api_key,
         base_url=request.base_url,
     )
     save_config(config)
@@ -102,7 +125,7 @@ def compile_prompt(request: CompileRequest) -> CompileResponse:
 
     if not is_configured() and not response.assumptions:
         response.assumptions.append(
-            "LLM provider is not configured; deterministic rule-based extraction was used."
+            "Managed Groq API key is not configured in pipeline/config.py; deterministic rule-based extraction was used."
         )
 
     return response
@@ -115,6 +138,9 @@ def evaluate() -> dict:
     return evaluator.run()
 
 
+if WEB_DIR.exists():
+    app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")
+
 def _env_flag(name: str, default: bool = False) -> bool:
     value = os.getenv(name)
     if value is None:
@@ -125,7 +151,7 @@ def _env_flag(name: str, default: bool = False) -> bool:
 def run() -> None:
     import uvicorn
 
-    host = os.getenv("HOST", "127.0.0.1")
+    host = os.getenv("HOST", "0.0.0.0")
     try:
         port = int(os.getenv("PORT", "8000"))
     except ValueError:

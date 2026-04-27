@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NL App Compiler Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="noise-overlay"></div>
+    <div class="grid-bg"></div>
+
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-mark">
+          <span>N</span>
+          <span>L</span>
+        </div>
+        <span class="logo-text">Compiler</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" data-panel="compile">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Compile
+        </a>
+        <a href="#" class="nav-item" data-panel="result">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+          Blueprint
+        </a>
+        <a href="#" class="nav-item" data-panel="evaluate">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Evaluate
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="status-dot"></div>
+        <span>API Ready</span>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-bar">
+        <div class="breadcrumb">
+          <span class="breadcrumb-root">Studio</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          <span id="breadcrumb-current">Compile Prompt</span>
+        </div>
+        <div class="top-bar-actions">
+          <span id="global-pill" class="global-pill hidden">
+            <span id="global-pill-dot"></span>
+            <span id="global-pill-text">-</span>
+          </span>
+        </div>
+      </header>
+
+      <!-- COMPILE PANEL -->
+      <section id="panel-compile" class="panel active">
+        <div class="panel-hero">
+          <p class="panel-eyebrow">Natural Language → Blueprint</p>
+          <h1 class="panel-title">NL App<br><em>Compiler</em> Studio</h1>
+          <p class="panel-lead">Describe any application in plain English. Watch it compile into a full database, API, UI, auth, and logic blueprint.</p>
+        </div>
+
+        <div class="compile-layout">
+          <div class="compile-main">
+            <div class="input-card">
+              <div class="input-card-header">
+                <label class="input-label">Your Prompt</label>
+                <button id="clear-prompt-btn" class="icon-btn" type="button" title="Clear">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+              <textarea id="prompt-input" rows="8" placeholder="Build a CRM with login, contacts, dashboard, role-based access..."></textarea>
+              <div class="input-card-footer">
+                <p id="compile-message" class="message"></p>
+                <button id="compile-btn" class="btn-compile" type="button">
+                  <span class="btn-compile-inner">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    Compile
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="compile-sidebar">
+            <div class="samples-card">
+              <p class="samples-title">Sample Prompts</p>
+              <div id="sample-prompts" class="samples-list"></div>
+            </div>
+            <div class="evaluate-card">
+              <p class="evaluate-label">Benchmark Suite</p>
+              <p class="evaluate-desc">Run all sample prompts and measure pipeline performance.</p>
+              <button id="evaluate-btn" class="btn-evaluate" type="button">Run Evaluation</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RESULT PANEL -->
+      <section id="panel-result" class="panel hidden">
+        <div class="panel-header-row">
+          <h2 class="section-title">Blueprint <em>Result</em></h2>
+          <span id="validity-pill" class="pill">—</span>
+        </div>
+
+        <div class="metrics-row">
+          <div class="metric-tile">
+            <span class="metric-label">Latency</span>
+            <strong id="metric-latency" class="metric-value">—</strong>
+          </div>
+          <div class="metric-tile">
+            <span class="metric-label">Retries</span>
+            <strong id="metric-retries" class="metric-value">—</strong>
+          </div>
+          <div class="metric-tile">
+            <span class="metric-label">Blueprint</span>
+            <strong id="metric-blueprint" class="metric-value">—</strong>
+          </div>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-block">
+            <h3 class="info-block-title">
+              <span class="info-icon">◈</span> Assumptions
+            </h3>
+            <ul id="assumptions-list" class="plain-list"></ul>
+          </div>
+          <div class="info-block">
+            <h3 class="info-block-title">
+              <span class="info-icon">◈</span> Clarification Questions
+            </h3>
+            <ul id="clarifications-list" class="plain-list"></ul>
+          </div>
+          <div class="info-block">
+            <h3 class="info-block-title">
+              <span class="info-icon warn-icon">⚠</span> Detected Issues
+            </h3>
+            <ul id="issues-list" class="plain-list"></ul>
+          </div>
+          <div class="info-block">
+            <h3 class="info-block-title">
+              <span class="info-icon ok-icon">✓</span> Repair Actions
+            </h3>
+            <ul id="repaired-list" class="plain-list"></ul>
+          </div>
+        </div>
+
+        <div class="section-divider">
+          <span>Issue Details</span>
+        </div>
+        <ul id="issue-details-list" class="plain-list issue-details"></ul>
+
+        <div class="section-divider">
+          <span>Blueprint View</span>
+        </div>
+        <div id="blueprint-content" class="blueprint-grid"></div>
+
+        <div class="section-divider">
+          <span>Raw JSON</span>
+        </div>
+        <pre id="raw-json" class="json-block"></pre>
+      </section>
+
+      <!-- EVALUATION PANEL -->
+      <section id="panel-evaluate" class="panel hidden">
+        <div class="panel-header-row">
+          <h2 class="section-title">Evaluation <em>Report</em></h2>
+          <span id="evaluation-badge" class="pill">Ready</span>
+        </div>
+        <div id="evaluation-summary" class="summary-grid"></div>
+        <div class="section-divider"><span>Full JSON</span></div>
+        <pre id="evaluation-json" class="json-block"></pre>
+      </section>
+    </main>
+
+    <script src="app.js" defer></script>
+    <script>
+      // Panel navigation
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', e => {
+          e.preventDefault();
+          const target = item.dataset.panel;
+          document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+          item.classList.add('active');
+          document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
+          const panel = document.getElementById('panel-' + target);
+          if (panel) {
+            panel.classList.remove('hidden');
+            panel.classList.add('active');
+          }
+          const titles = { compile: 'Compile Prompt', result: 'Blueprint Result', evaluate: 'Evaluation Report' };
+          document.getElementById('breadcrumb-current').textContent = titles[target] || '';
+        });
+      });
+    </script>
+  </body>
+</html>

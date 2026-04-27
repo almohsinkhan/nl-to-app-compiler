@@ -22,19 +22,31 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-2. Initialize LLM provider config:
+2. Set managed Groq API key in code config:
+
+Edit `pipeline/config.py` and set:
+
+```python
+MANAGED_GROQ_API_KEY = "your-groq-api-key"
+```
+
+3. Initialize Groq model/base URL override (no API key prompt):
 
 ```bash
 python scripts/init_config.py
 ```
 
-3. Run API:
+4. Run API:
 
 ```bash
 uvicorn main:app --reload
 ```
 
-4. Compile prompt:
+5. Open the UI:
+
+Visit `http://127.0.0.1:8000/` in your browser.
+
+6. Compile prompt via API:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/compile \
@@ -67,8 +79,10 @@ After blueprint generation, the compiler runs a lightweight reliability pass:
 
 ## API Endpoints
 
-- `POST /config/init` - initialize provider and API key
-- `POST /config/set` - alias for config init (supports local providers like Ollama)
+- `GET /` - web UI
+- `GET /api` - API root metadata
+- `POST /config/init` - initialize Groq model/base URL override (managed API key is used automatically)
+- `POST /config/set` - alias for config init
 - `GET /config/status` - configuration state
 - `POST /compile` - compile NL prompt into blueprint
 - `POST /evaluate` - run benchmark prompts
