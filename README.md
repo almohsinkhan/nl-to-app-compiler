@@ -22,37 +22,44 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-2. Set managed Groq API key in code config:
+2. Set managed Groq API key using a `.env` file:
 
-Edit `pipeline/config.py` and set:
+Create a `.env` file in the root directory (or use the existing one) and add your Groq API key:
 
-```python
-MANAGED_GROQ_API_KEY = "your-groq-api-key"
+```env
+MANAGED_GROQ_API_KEY=gsk_your_api_key_here
 ```
 
-3. Initialize Groq model/base URL override (no API key prompt):
+3. Run API:
 
 ```bash
-python scripts/init_config.py
+python main.py
 ```
 
-4. Run API:
+4. Open the UI:
 
-```bash
-uvicorn main:app --reload
-```
+Visit `http://127.0.0.1:8000/` in your browser. The frontend is served directly by the FastAPI backend!
 
-5. Open the UI:
-
-Visit `http://127.0.0.1:8000/` in your browser.
-
-6. Compile prompt via API:
+5. Compile prompt via API:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/compile \
   -H "Content-Type: application/json" \
   -d '{"prompt": "Build a CRM with login, contacts, dashboard, role-based access"}'
 ```
+
+## Deployment (Render)
+
+This application is configured for a unified deployment on Render where both the frontend and backend run as a single web service.
+
+1. Create a new **Web Service** on Render and connect your GitHub repository.
+2. Build Command: `pip install -r requirements.txt`
+3. Start Command: `python main.py`
+4. Add Environment Variable:
+   - Key: `MANAGED_GROQ_API_KEY`
+   - Value: `gsk_your_api_key_here`
+
+Render automatically injects the `$PORT` environment variable, which `main.py` detects to bind the Uvicorn server properly. The frontend is automatically served from the `web/` directory at the root (`/`) path, making cross-origin configuration unnecessary.
 
 Compile responses now include:
 - `issues`: detected issue messages

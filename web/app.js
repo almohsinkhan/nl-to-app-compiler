@@ -1,8 +1,3 @@
-// TODO: When deploying the backend to Render, change this to your Render API URL
-// e.g., "https://your-backend.onrender.com"
-// Leave as "" for local development using FastAPI's static server.
-
-
 const SAMPLE_PROMPTS = [
   "Build a CRM with login, contacts, dashboard, and role-based permissions.",
   "Create a school portal for students, teachers, and admin with assignments and grading.",
@@ -326,7 +321,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setMessage(compileMessage, "");
 
     try {
-      const response = await postJson(`${API_BASE_URL}/compile`, { prompt });
+      const response = await postJson("/compile", { prompt });
       const resultNav = document.querySelector('[data-panel="result"]');
       if (resultNav) resultNav.click();
       else resultPanel.classList.remove("hidden");
@@ -362,7 +357,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setMessage(compileMessage, "");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/evaluate`, { method: "POST" });
+      const response = await fetch("/evaluate", { method: "POST" });
       const text = await response.text();
       let parsed = {};
       try {
