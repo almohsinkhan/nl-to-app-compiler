@@ -1,0 +1,26 @@
+{
+  "normal_prompts": [
+    "Build a CRM with login, contacts, dashboard, role-based access",
+    "Create an ecommerce admin app with products, orders, and inventory management",
+    "Build a project tracker with tasks, assignees, and reporting",
+    "Create a billing platform with invoices, customers, and payment reminders",
+    "Build a school management app with students, teachers, and attendance",
+    "Create a clinic portal with patient records and appointment scheduling",
+    "Build a helpdesk app with tickets, agents, and SLA dashboard",
+    "Create an HR app with employees, leave requests, and approvals",
+    "Build a logistics system with shipments, drivers, and tracking",
+    "Create a subscription SaaS backend with users, plans, and invoices"
+  ],
+  "edge_prompts": [
+    "Build app",
+    "I need something like Salesforce but simpler",
+    "Make a system with users and no authentication",
+    "Create an app with no database but full CRUD APIs",
+    "Build a platform with admin role but no permissions",
+    "Create dashboard only and also full transaction workflow",
+    "Build a healthcare CRM and do not store patient data",
+    "Make multi-tenant ERP with one global user table and strict isolation",
+    "Create an app with contacts and invoices but no entities",
+    "Need a system soon"
+  ]
+}
